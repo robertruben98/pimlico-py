@@ -28,9 +28,19 @@ requires_key = pytest.mark.skipif(
 )
 
 
+def _api_key() -> str:
+    """Return the API key, narrowed to ``str``.
+
+    These tests only run under ``@requires_key``, which guarantees the key is
+    set; the assertion narrows the ``Optional[str]`` for the type checker.
+    """
+    assert API_KEY is not None
+    return API_KEY
+
+
 @requires_key
 def test_live_supported_entry_points_includes_v07():
-    with PimlicoClient(api_key=API_KEY, chain=CHAIN) as client:
+    with PimlicoClient(api_key=_api_key(), chain=CHAIN) as client:
         entry_points = client.eth_supported_entry_points()
 
     assert isinstance(entry_points, list)
@@ -42,7 +52,7 @@ def test_live_supported_entry_points_includes_v07():
 
 @requires_key
 def test_live_gas_price_tiers_are_hex():
-    with PimlicoClient(api_key=API_KEY, chain=CHAIN) as client:
+    with PimlicoClient(api_key=_api_key(), chain=CHAIN) as client:
         prices = client.pimlico_get_user_operation_gas_price()
 
     for tier in (prices.slow, prices.standard, prices.fast):
@@ -55,7 +65,7 @@ def test_live_gas_price_tiers_are_hex():
 @requires_key
 def test_live_status_of_unknown_hash_is_not_found():
     unknown = "0x" + "00" * 32
-    with PimlicoClient(api_key=API_KEY, chain=CHAIN) as client:
+    with PimlicoClient(api_key=_api_key(), chain=CHAIN) as client:
         status = client.pimlico_get_user_operation_status(unknown)
 
     assert status.status == "not_found"
@@ -63,7 +73,7 @@ def test_live_status_of_unknown_hash_is_not_found():
 
 @requires_key
 async def test_live_async_gas_price():
-    async with AsyncPimlicoClient(api_key=API_KEY, chain=CHAIN) as client:
+    async with AsyncPimlicoClient(api_key=_api_key(), chain=CHAIN) as client:
         prices = await client.pimlico_get_user_operation_gas_price()
 
     assert prices.standard.max_fee_per_gas.startswith("0x")
