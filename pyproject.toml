@@ -1,0 +1,119 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pimlico-py"
+version = "0.1.0"
+description = "Typed Python client for the Pimlico ERC-4337 API: bundler, paymaster, and gas estimation over JSON-RPC."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "robertruben98" }]
+keywords = [
+    "pimlico",
+    "erc-4337",
+    "account-abstraction",
+    "bundler",
+    "paymaster",
+    "ethereum",
+    "userOperation",
+    "web3",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+dependencies = [
+    "httpx>=0.24",
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+exec = [
+    "web3>=6.0",
+    "eth-account>=0.9",
+]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "respx>=0.20",
+    "mypy>=1.0",
+    "ruff>=0.4",
+]
+
+[project.urls]
+Homepage = "https://github.com/robertruben98/pimlico-py"
+Repository = "https://github.com/robertruben98/pimlico-py"
+Documentation = "https://docs.pimlico.io"
+Issues = "https://github.com/robertruben98/pimlico-py/issues"
+Changelog = "https://github.com/robertruben98/pimlico-py/blob/main/CHANGELOG.md"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pimlico"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/README.md",
+    "/CHANGELOG.md",
+    "/LICENSE",
+]
+
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "B", "UP", "C4", "SIM", "RUF"]
+# The UP rules below would modernise type hints in ways that are unsafe on the
+# Python 3.9 floor this package supports, because pydantic evaluates model
+# annotations at runtime:
+#   UP007 / UP045 -> rewrite Optional/Union into PEP 604 `X | Y` (TypeError on 3.9)
+#   UP006 / UP035 -> rewrite typing.List/Dict into builtin generics
+# Keep the explicit typing.* forms throughout.
+ignore = ["UP006", "UP007", "UP035", "UP045"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+files = ["src", "tests"]
+
+[[tool.mypy.overrides]]
+module = ["respx", "web3.*", "eth_account.*"]
+ignore_missing_imports = true
+
+# Test functions are intentionally untyped (pytest discovers them by name and
+# their return is always None); keep strict checking focused on the package.
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_calls = false
+disallow_untyped_decorators = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+    "integration: live tests that require PIMLICO_API_KEY (deselected by default)",
+]
+addopts = "-m 'not integration'"
